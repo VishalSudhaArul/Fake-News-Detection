@@ -256,8 +256,8 @@ AI analyzing news...
 
 <h2 style={{
 color: result.prediction==="Real News"
-? "#16a34a"
-: "#dc2626"
+? "#dc2626"
+: "#16a34a"
 }}>
 {result.prediction}
 </h2>
