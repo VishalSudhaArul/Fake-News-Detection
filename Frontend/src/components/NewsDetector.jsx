@@ -22,17 +22,19 @@ const [history,setHistory] = useState([])
 
 
 
-/* NORMALIZE RESULT */
+/* NORMALIZE LABEL */
 
-const normalizePrediction = (prediction)=>{
-if(!prediction) return ""
+const normalize = (label)=>{
 
-const p = prediction.toLowerCase()
+if(!label) return ""
 
-if(p.includes("real")) return "Real News"
-if(p.includes("fake")) return "Fake News"
+const l = label.toLowerCase()
 
-return prediction
+if(l.includes("real")) return "Real News"
+if(l.includes("fake")) return "Fake News"
+
+return label
+
 }
 
 
@@ -51,7 +53,7 @@ const res = await axios.post(`${API}/predict`,{
 text:text
 })
 
-const fixedPrediction = normalizePrediction(res.data.prediction)
+const fixedPrediction = normalize(res.data.prediction)
 
 const newResult={
 ...res.data,
@@ -66,7 +68,9 @@ setHistory(prev=>[
 ])
 
 }catch(err){
+
 console.log(err)
+
 }
 
 setLoading(false)
@@ -89,7 +93,7 @@ const res = await axios.post(`${API}/predict-url`,{
 url:url
 })
 
-const fixedPrediction = normalizePrediction(res.data.prediction)
+const fixedPrediction = normalize(res.data.prediction)
 
 const newResult={
 ...res.data,
@@ -104,7 +108,9 @@ setHistory(prev=>[
 ])
 
 }catch(err){
+
 console.log(err)
+
 }
 
 setLoading(false)
@@ -113,17 +119,21 @@ setLoading(false)
 
 
 
-/* EXAMPLE TEXTS */
+/* EXAMPLES */
 
 const exampleReal = ()=>{
 
-setText("The Indian government announced a new education policy aimed at improving rural schools and digital learning.")
+setText(
+"The Indian government announced a new education policy aimed at improving rural school infrastructure and digital learning."
+)
 
 }
 
 const exampleFake = ()=>{
 
-setText("Breaking: Scientists discover a secret planet hidden behind the sun that NASA kept secret for decades.")
+setText(
+"Donald Trump sends his own plane to transport 200 stranded Marines."
+)
 
 }
 
@@ -199,7 +209,8 @@ Clear
 </div>
 
 
-{/* EXAMPLES */}
+
+{/* EXAMPLE BUTTONS */}
 
 <div style={styles.exampleRow}>
 
@@ -240,13 +251,14 @@ AI analyzing news...
 </div>
 )}
 
-
 {result && (
 
 <div style={styles.resultCard}>
 
 <h2 style={{
-color: result.prediction==="Real News" ? "#16a34a" : "#dc2626"
+color: result.prediction==="Real News"
+? "#16a34a"
+: "#dc2626"
 }}>
 {result.prediction}
 </h2>
@@ -266,30 +278,9 @@ result.prediction==="Real News"
 ></div>
 </div>
 
-
-{result.credibility && (
-
-<>
-<p>Credibility Score: {result.credibility}%</p>
-
-<div style={styles.barBg}>
-<div
-style={{
-...styles.barFill,
-width:`${result.credibility}%`,
-background:"#3b82f6"
-}}
-></div>
-</div>
-
-</>
-
-)}
-
 </div>
 
 )}
-
 
 <p style={styles.note}>
 Note: This system predicts fake news based on writing patterns and may not verify factual correctness.
@@ -313,7 +304,9 @@ Note: This system predicts fake news based on writing patterns and may not verif
 
 <div style={styles.historyBox}>
 
-{history.length===0 && <p>No history yet</p>}
+{history.length===0 && (
+<p>No history yet</p>
+)}
 
 {history.map((h,i)=>(
 <div key={i} style={styles.historyItem}>
@@ -322,10 +315,14 @@ Note: This system predicts fake news based on writing patterns and may not verif
 {h.text.substring(0,80)}...
 </p>
 
-<span style={{
-color:h.result==="Real News" ? "#16a34a" : "#dc2626",
+<span
+style={{
+color:h.result==="Real News"
+? "#16a34a"
+: "#dc2626",
 fontWeight:"bold"
-}}>
+}}
+>
 {h.result}
 </span>
 
