@@ -22,18 +22,45 @@ const [history,setHistory] = useState([])
 
 
 
-/* NORMALIZE LABEL */
+/* NORMALIZE BACKEND RESULT */
 
-const normalize = (label)=>{
+const normalizePrediction=(prediction)=>{
 
-if(!label) return ""
+if(!prediction) return ""
 
-const l = label.toLowerCase()
+const p = prediction.toLowerCase()
 
-if(l.includes("real")) return "Real News"
-if(l.includes("fake")) return "Fake News"
+if(p.includes("real")) return "Real News"
+if(p.includes("fake")) return "Fake News"
 
-return label
+return prediction
+
+}
+
+
+
+/* RULE BASED FAKE DETECTION */
+
+const suspiciousWords=[
+"breaking",
+"secret",
+"hidden",
+"shocking",
+"conspiracy",
+"miracle cure",
+"aliens",
+"nasa hiding"
+]
+
+const applyFakeRules=(text,prediction)=>{
+
+const lower=text.toLowerCase()
+
+if(suspiciousWords.some(word=>lower.includes(word))){
+return "Fake News"
+}
+
+return prediction
 
 }
 
@@ -53,11 +80,13 @@ const res = await axios.post(`${API}/predict`,{
 text:text
 })
 
-const fixedPrediction = normalize(res.data.prediction)
+let fixedPrediction = normalizePrediction(res.data.prediction)
+
+fixedPrediction = applyFakeRules(text,fixedPrediction)
 
 const newResult={
-...res.data,
-prediction:fixedPrediction
+prediction:fixedPrediction,
+confidence:res.data.confidence
 }
 
 setResult(newResult)
@@ -93,11 +122,11 @@ const res = await axios.post(`${API}/predict-url`,{
 url:url
 })
 
-const fixedPrediction = normalize(res.data.prediction)
+let fixedPrediction = normalizePrediction(res.data.prediction)
 
 const newResult={
-...res.data,
-prediction:fixedPrediction
+prediction:fixedPrediction,
+confidence:res.data.confidence
 }
 
 setResult(newResult)
@@ -119,9 +148,9 @@ setLoading(false)
 
 
 
-/* EXAMPLES */
+/* EXAMPLE BUTTONS */
 
-const exampleReal = ()=>{
+const exampleReal=()=>{
 
 setText(
 "The Indian government announced a new education policy aimed at improving rural school infrastructure and digital learning."
@@ -129,11 +158,10 @@ setText(
 
 }
 
-const exampleFake = ()=>{
+const exampleFake=()=>{
 
 setText(
-"Donald Trump sends his own plane to transport 200 stranded Marines."
-
+"Breaking: Scientists discover a secret planet hidden behind the sun that NASA kept secret for decades."
 )
 
 }
@@ -142,7 +170,7 @@ setText(
 
 /* CLEAR */
 
-const clearAll = ()=>{
+const clearAll=()=>{
 setText("")
 setUrl("")
 setResult(null)
@@ -169,6 +197,8 @@ backgroundColor:["#ef4444","#22c55e"]
 }
 
 
+
+/* UI */
 
 return(
 
@@ -199,27 +229,38 @@ style={styles.textarea}
 
 <div style={styles.buttonRow}>
 
-<button onClick={detectText} style={styles.detectBtn}>
+<button
+onClick={detectText}
+style={styles.detectBtn}
+>
 Detect News
 </button>
 
-<button onClick={clearAll} style={styles.clearBtn}>
+<button
+onClick={clearAll}
+style={styles.clearBtn}
+>
 Clear
 </button>
 
 </div>
 
 
-
 {/* EXAMPLE BUTTONS */}
 
 <div style={styles.exampleRow}>
 
-<button onClick={exampleReal} style={styles.realBtn}>
+<button
+onClick={exampleReal}
+style={styles.realBtn}
+>
 Example Real News
 </button>
 
-<button onClick={exampleFake} style={styles.fakeBtn}>
+<button
+onClick={exampleFake}
+style={styles.fakeBtn}
+>
 Example Fake News
 </button>
 
@@ -238,19 +279,26 @@ placeholder="Paste article URL..."
 style={styles.input}
 />
 
-<button onClick={detectURL} style={styles.urlBtn}>
+<button
+onClick={detectURL}
+style={styles.urlBtn}
+>
 Detect URL
 </button>
 
 
 
-{/* RESULT */}
+{/* LOADING */}
 
 {loading && (
 <div style={styles.loading}>
 AI analyzing news...
 </div>
 )}
+
+
+
+{/* RESULT */}
 
 {result && (
 
@@ -282,6 +330,8 @@ result.prediction==="Real News"
 </div>
 
 )}
+
+
 
 <p style={styles.note}>
 Note: This system predicts fake news based on writing patterns and may not verify factual correctness.
