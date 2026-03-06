@@ -255,7 +255,7 @@ AI analyzing news...
 <div style={styles.resultCard}>
 
 <h2 style={{
-color: result.prediction==="Real News"
+color: result.prediction==="Fake News"
 ? "#16a34a"
 : "#dc2626"
 }}>
