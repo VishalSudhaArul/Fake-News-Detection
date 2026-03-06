@@ -1,105 +1,121 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 import joblib
-import re
+import requests
+from bs4 import BeautifulSoup
 
 app = Flask(__name__)
 CORS(app)
 
-# Load ML model
+# Load trained model and vectorizer
 model = joblib.load("model.pkl")
 vectorizer = joblib.load("vectorizer.pkl")
 
 
-# -----------------------------
-# FACT CHECK HEURISTIC
-# -----------------------------
+# ---------------------------------
+# Function: Extract article text
+# ---------------------------------
+def extract_text_from_url(url):
+    try:
+        headers = {
+            "User-Agent": "Mozilla/5.0"
+        }
 
-suspicious_words = [
-    "secret",
-    "shocking",
-    "breaking",
-    "you won't believe",
-    "miracle",
-    "experiment proves",
-    "government hiding",
-    "conspiracy",
-    "hidden truth",
-    "doctors hate",
-    "scientists prove",
-    "cure instantly"
-]
+        response = requests.get(url, headers=headers, timeout=10)
+        soup = BeautifulSoup(response.text, "lxml")
 
+        paragraphs = soup.find_all("p")
+        article_text = " ".join([p.get_text() for p in paragraphs])
 
-def credibility_check(text):
+        if len(article_text) < 200:
+            return None
 
-    score = 100
-    text_lower = text.lower()
+        return article_text
 
-    for word in suspicious_words:
-        if word in text_lower:
-            score -= 15
-
-    # penalize excessive exclamation
-    if "!!!" in text:
-        score -= 10
-
-    # penalize random gibberish
-    if re.search(r"[a-z]{6,}[0-9]{3,}", text_lower):
-        score -= 10
-
-    score = max(score, 0)
-
-    return score
+    except Exception as e:
+        print("Error extracting article:", e)
+        return None
 
 
-# -----------------------------
-# ML PREDICTION
-# -----------------------------
-
-def predict_news(text):
-
-    vector = vectorizer.transform([text])
-
-    prediction = model.predict(vector)[0]
-
-    probability = model.predict_proba(vector)[0]
-
-    confidence = max(probability) * 100
-
-    if prediction == 1:
-        label = "Real News"
-    else:
-        label = "Fake News"
-
-    credibility = credibility_check(text)
-
-    return label, round(confidence,2), credibility
-
-
-# -----------------------------
-# API ROUTE
-# -----------------------------
-
-@app.route("/predict", methods=["POST"])
-def predict():
-
-    data = request.json
-    text = data.get("text","")
-
-    if text == "":
-        return jsonify({"error":"No text provided"})
-
-    label, confidence, credibility = predict_news(text)
-
+# ---------------------------------
+# Home Route
+# ---------------------------------
+@app.route("/")
+def home():
     return jsonify({
-        "prediction": label,
-        "confidence": confidence,
-        "credibility": credibility
+        "message": "AI Fake News Detection API Running"
     })
 
 
-# -----------------------------
+# ---------------------------------
+# Predict from Text
+# ---------------------------------
+@app.route("/predict", methods=["POST"])
+def predict():
 
+    data = request.get_json()
+
+    text = data.get("text", "")
+
+    if text.strip() == "":
+        return jsonify({
+            "prediction": "Invalid Input",
+            "confidence": 0
+        })
+
+    vectorized = vectorizer.transform([text])
+    prediction = model.predict(vectorized)[0]
+    probability = model.predict_proba(vectorized)[0]
+
+    confidence = round(max(probability) * 100, 2)
+
+    result = "Real News" if prediction == 1 else "Fake News"
+
+    return jsonify({
+        "prediction": result,
+        "confidence": confidence
+    })
+
+
+# ---------------------------------
+# Predict from URL
+# ---------------------------------
+@app.route("/predict-url", methods=["POST"])
+def predict_url():
+
+    data = request.get_json()
+    url = data.get("url")
+
+    if not url:
+        return jsonify({
+            "prediction": "Invalid URL",
+            "confidence": 0
+        })
+
+    article_text = extract_text_from_url(url)
+
+    if not article_text:
+        return jsonify({
+            "prediction": "Unable to fetch article. Try another link.",
+            "confidence": 0
+        })
+
+    vectorized = vectorizer.transform([article_text])
+    prediction = model.predict(vectorized)[0]
+    probability = model.predict_proba(vectorized)[0]
+
+    confidence = round(max(probability) * 100, 2)
+
+    result = "Real News" if prediction == 1 else "Fake News"
+
+    return jsonify({
+        "prediction": result,
+        "confidence": confidence
+    })
+
+
+# ---------------------------------
+# Run Server
+# ---------------------------------
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(host="0.0.0.0", port=5000)
