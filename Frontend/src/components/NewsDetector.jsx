@@ -124,7 +124,7 @@ setLoading(false)
 const exampleReal = ()=>{
 
 setText(
-"Donald Trump sends his own plane to transport 200 stranded Marines."
+"The Indian government announced a new education policy aimed at improving rural school infrastructure and digital learning."
 )
 
 }
@@ -132,7 +132,8 @@ setText(
 const exampleFake = ()=>{
 
 setText(
-"The Indian government announced a new education policy aimed at improving rural school infrastructure and digital learning.")
+"Donald Trump sends his own plane to transport 200 stranded Marines."
+)
 
 }
 
@@ -160,7 +161,7 @@ labels:["Fake News","Real News"],
 datasets:[
 {
 data:[fakeCount,realCount],
-backgroundColor:["#22c55e","#ef4444"]
+backgroundColor:["#ef4444","#22c55e"]
 }
 ]
 
@@ -214,11 +215,11 @@ Clear
 <div style={styles.exampleRow}>
 
 <button onClick={exampleReal} style={styles.realBtn}>
-Example Fake News
+Example Real News
 </button>
 
 <button onClick={exampleFake} style={styles.fakeBtn}>
-Example Real News
+Example Fake News
 </button>
 
 </div>
@@ -256,8 +257,8 @@ AI analyzing news...
 
 <h2 style={{
 color: result.prediction==="Real News"
-? "#dc2626"
-: "#16a34a"
+? "#16a34a"
+: "#dc2626"
 }}>
 {result.prediction}
 </h2>
@@ -270,7 +271,7 @@ style={{
 ...styles.barFill,
 width:`${result.confidence}%`,
 background:
-result.prediction==="Fake News"
+result.prediction==="Real News"
 ? "#22c55e"
 : "#ef4444"
 }}
@@ -318,7 +319,7 @@ Note: This system predicts fake news based on writing patterns and may not verif
 style={{
 color:h.result==="Real News"
 ? "#16a34a"
-: "#dc2626" ,
+: "#dc2626",
 fontWeight:"bold"
 }}
 >
@@ -435,7 +436,7 @@ borderRadius:"6px"
 },
 
 realBtn:{
-background:"#ef4444",
+background:"#22c55e",
 color:"white",
 padding:"8px 14px",
 border:"none",
@@ -443,7 +444,7 @@ borderRadius:"6px"
 },
 
 fakeBtn:{
-background:"#22c55e",
+background:"#ef4444",
 color:"white",
 padding:"8px 14px",
 border:"none",
