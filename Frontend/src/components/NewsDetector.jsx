@@ -121,7 +121,7 @@ setLoading(false)
 
 /* EXAMPLES */
 
-const exampleReal = ()=>{
+const exampleFake = ()=>{
 
 setText(
 "Donald Trump sends his own plane to transport 200 stranded Marines."
@@ -129,7 +129,7 @@ setText(
 
 }
 
-const exampleFake = ()=>{
+const exampleReal = ()=>{
 
 setText(
 "The Indian government announced a new education policy aimed at improving rural school infrastructure and digital learning."
