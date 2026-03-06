@@ -12,20 +12,34 @@ ChartJS.register(ArcElement, Tooltip, Legend)
 
 export default function NewsDetector(){
 
+const API="https://fake-news-detection-2-j5mr.onrender.com"
+
 const [text,setText] = useState("")
 const [url,setUrl] = useState("")
 const [result,setResult] = useState(null)
 const [loading,setLoading] = useState(false)
 const [history,setHistory] = useState([])
 
-const API="https://fake-news-detection-2-j5mr.onrender.com"
+
+
+/* NORMALIZE RESULT */
+
+const normalizePrediction = (prediction)=>{
+if(!prediction) return ""
+
+const p = prediction.toLowerCase()
+
+if(p.includes("real")) return "Real News"
+if(p.includes("fake")) return "Fake News"
+
+return prediction
+}
 
 
 
+/* TEXT DETECTION */
 
-/* ---------------- TEXT DETECTION ---------------- */
-
-const detectText = async () =>{
+const detectText = async ()=>{
 
 if(!text.trim()) return
 
@@ -37,17 +51,22 @@ const res = await axios.post(`${API}/predict`,{
 text:text
 })
 
-setResult(res.data)
+const fixedPrediction = normalizePrediction(res.data.prediction)
+
+const newResult={
+...res.data,
+prediction:fixedPrediction
+}
+
+setResult(newResult)
 
 setHistory(prev=>[
-{text:text,result:res.data.prediction},
+{text:text,result:fixedPrediction},
 ...prev
 ])
 
 }catch(err){
-
 console.log(err)
-
 }
 
 setLoading(false)
@@ -56,10 +75,9 @@ setLoading(false)
 
 
 
+/* URL DETECTION */
 
-/* ---------------- URL DETECTION ---------------- */
-
-const detectURL = async () =>{
+const detectURL = async ()=>{
 
 if(!url.trim()) return
 
@@ -71,17 +89,22 @@ const res = await axios.post(`${API}/predict-url`,{
 url:url
 })
 
-setResult(res.data)
+const fixedPrediction = normalizePrediction(res.data.prediction)
+
+const newResult={
+...res.data,
+prediction:fixedPrediction
+}
+
+setResult(newResult)
 
 setHistory(prev=>[
-{text:url,result:res.data.prediction},
+{text:url,result:fixedPrediction},
 ...prev
 ])
 
 }catch(err){
-
 console.log(err)
-
 }
 
 setLoading(false)
@@ -90,29 +113,23 @@ setLoading(false)
 
 
 
+/* EXAMPLE TEXTS */
 
-/* ---------------- EXAMPLES ---------------- */
+const exampleReal = ()=>{
 
-const realExample = ()=>{
-
-const sample = "The Indian government announced a new education policy aimed at improving rural schools and digital learning."
-
-setText(sample)
+setText("The Indian government announced a new education policy aimed at improving rural schools and digital learning.")
 
 }
 
-const fakeExample = ()=>{
+const exampleFake = ()=>{
 
-const sample = "Breaking: Scientists discover a secret planet hidden behind the sun that NASA kept secret for decades."
-
-setText(sample)
+setText("Breaking: Scientists discover a secret planet hidden behind the sun that NASA kept secret for decades.")
 
 }
 
 
 
-
-/* ---------------- CLEAR ---------------- */
+/* CLEAR */
 
 const clearAll = ()=>{
 setText("")
@@ -122,25 +139,23 @@ setResult(null)
 
 
 
+/* CHART DATA */
 
-/* ---------------- CHART ---------------- */
+const fakeCount = history.filter(h=>h.result==="Fake News").length
+const realCount = history.filter(h=>h.result==="Real News").length
 
-const chartData = {
+const chartData={
 
 labels:["Fake News","Real News"],
 
 datasets:[
 {
-data:[
-history.filter(h=>h.result==="Fake News").length,
-history.filter(h=>h.result==="Real News").length
-],
+data:[fakeCount,realCount],
 backgroundColor:["#ef4444","#22c55e"]
 }
 ]
 
 }
-
 
 
 
@@ -173,39 +188,27 @@ style={styles.textarea}
 
 <div style={styles.buttonRow}>
 
-<button
-onClick={detectText}
-style={styles.detectBtn}
->
+<button onClick={detectText} style={styles.detectBtn}>
 Detect News
 </button>
 
-<button
-onClick={clearAll}
-style={styles.clearBtn}
->
+<button onClick={clearAll} style={styles.clearBtn}>
 Clear
 </button>
 
 </div>
 
 
-{/* ----------- EXAMPLE BUTTONS ----------- */}
+{/* EXAMPLES */}
 
 <div style={styles.exampleRow}>
 
-<button
-onClick={realExample}
-style={styles.realExample}
->
-Try Real News Example
+<button onClick={exampleReal} style={styles.realBtn}>
+Example Real News
 </button>
 
-<button
-onClick={fakeExample}
-style={styles.fakeExample}
->
-Try Fake News Example
+<button onClick={exampleFake} style={styles.fakeBtn}>
+Example Fake News
 </button>
 
 </div>
@@ -223,23 +226,20 @@ placeholder="Paste article URL..."
 style={styles.input}
 />
 
-<button
-onClick={detectURL}
-style={styles.urlBtn}
->
+<button onClick={detectURL} style={styles.urlBtn}>
 Detect URL
 </button>
 
 
 
-
-{/* RESULT CARD */}
+{/* RESULT */}
 
 {loading && (
 <div style={styles.loading}>
 AI analyzing news...
 </div>
 )}
+
 
 {result && (
 
@@ -266,6 +266,7 @@ result.prediction==="Real News"
 ></div>
 </div>
 
+
 {result.credibility && (
 
 <>
@@ -289,12 +290,12 @@ background:"#3b82f6"
 
 )}
 
+
 <p style={styles.note}>
 Note: This system predicts fake news based on writing patterns and may not verify factual correctness.
 </p>
 
 </div>
-
 
 
 
@@ -312,9 +313,7 @@ Note: This system predicts fake news based on writing patterns and may not verif
 
 <div style={styles.historyBox}>
 
-{history.length===0 && (
-<p>No history yet</p>
-)}
+{history.length===0 && <p>No history yet</p>}
 
 {history.map((h,i)=>(
 <div key={i} style={styles.historyItem}>
@@ -323,12 +322,10 @@ Note: This system predicts fake news based on writing patterns and may not verif
 {h.text.substring(0,80)}...
 </p>
 
-<span
-style={{
-color: h.result==="Real News" ? "#16a34a" : "#dc2626",
+<span style={{
+color:h.result==="Real News" ? "#16a34a" : "#dc2626",
 fontWeight:"bold"
-}}
->
+}}>
 {h.result}
 </span>
 
@@ -349,6 +346,7 @@ fontWeight:"bold"
 
 
 
+/* STYLES */
 
 const styles={
 
@@ -381,8 +379,7 @@ boxShadow:"0 4px 10px rgba(0,0,0,0.1)"
 },
 
 title:{
-fontSize:"36px",
-marginBottom:"5px"
+fontSize:"36px"
 },
 
 subtitle:{
@@ -414,8 +411,7 @@ gap:"10px"
 exampleRow:{
 display:"flex",
 gap:"10px",
-marginTop:"10px",
-marginBottom:"10px"
+marginTop:"10px"
 },
 
 detectBtn:{
@@ -423,8 +419,7 @@ background:"#2563eb",
 color:"white",
 padding:"10px 20px",
 border:"none",
-borderRadius:"6px",
-cursor:"pointer"
+borderRadius:"6px"
 },
 
 clearBtn:{
@@ -432,26 +427,7 @@ background:"#6b7280",
 color:"white",
 padding:"10px 20px",
 border:"none",
-borderRadius:"6px",
-cursor:"pointer"
-},
-
-realExample:{
-background:"#22c55e",
-color:"white",
-padding:"8px 14px",
-border:"none",
-borderRadius:"6px",
-cursor:"pointer"
-},
-
-fakeExample:{
-background:"#ef4444",
-color:"white",
-padding:"8px 14px",
-border:"none",
-borderRadius:"6px",
-cursor:"pointer"
+borderRadius:"6px"
 },
 
 urlBtn:{
@@ -459,8 +435,23 @@ background:"#16a34a",
 color:"white",
 padding:"10px 20px",
 border:"none",
-borderRadius:"6px",
-cursor:"pointer"
+borderRadius:"6px"
+},
+
+realBtn:{
+background:"#22c55e",
+color:"white",
+padding:"8px 14px",
+border:"none",
+borderRadius:"6px"
+},
+
+fakeBtn:{
+background:"#ef4444",
+color:"white",
+padding:"8px 14px",
+border:"none",
+borderRadius:"6px"
 },
 
 resultCard:{
