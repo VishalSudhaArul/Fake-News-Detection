@@ -18,6 +18,13 @@ const [result,setResult] = useState(null)
 const [loading,setLoading] = useState(false)
 const [history,setHistory] = useState([])
 
+const API="https://fake-news-detection-2-j5mr.onrender.com"
+
+
+
+
+/* ---------------- TEXT DETECTION ---------------- */
+
 const detectText = async () =>{
 
 if(!text.trim()) return
@@ -26,7 +33,7 @@ setLoading(true)
 
 try{
 
-const res = await axios.post("https://fake-news-detection-2-j5mr.onrender.com/predict",{
+const res = await axios.post(`${API}/predict`,{
 text:text
 })
 
@@ -47,11 +54,76 @@ setLoading(false)
 
 }
 
+
+
+
+/* ---------------- URL DETECTION ---------------- */
+
+const detectURL = async () =>{
+
+if(!url.trim()) return
+
+setLoading(true)
+
+try{
+
+const res = await axios.post(`${API}/predict-url`,{
+url:url
+})
+
+setResult(res.data)
+
+setHistory(prev=>[
+{text:url,result:res.data.prediction},
+...prev
+])
+
+}catch(err){
+
+console.log(err)
+
+}
+
+setLoading(false)
+
+}
+
+
+
+
+/* ---------------- EXAMPLES ---------------- */
+
+const realExample = ()=>{
+
+const sample = "The Indian government announced a new education policy aimed at improving rural schools and digital learning."
+
+setText(sample)
+
+}
+
+const fakeExample = ()=>{
+
+const sample = "Breaking: Scientists discover a secret planet hidden behind the sun that NASA kept secret for decades."
+
+setText(sample)
+
+}
+
+
+
+
+/* ---------------- CLEAR ---------------- */
+
 const clearAll = ()=>{
 setText("")
 setUrl("")
 setResult(null)
 }
+
+
+
+
+/* ---------------- CHART ---------------- */
 
 const chartData = {
 
@@ -68,6 +140,9 @@ backgroundColor:["#ef4444","#22c55e"]
 ]
 
 }
+
+
+
 
 return(
 
@@ -114,6 +189,29 @@ Clear
 
 </div>
 
+
+{/* ----------- EXAMPLE BUTTONS ----------- */}
+
+<div style={styles.exampleRow}>
+
+<button
+onClick={realExample}
+style={styles.realExample}
+>
+Try Real News Example
+</button>
+
+<button
+onClick={fakeExample}
+style={styles.fakeExample}
+>
+Try Fake News Example
+</button>
+
+</div>
+
+
+
 <hr/>
 
 <h3>Check News URL</h3>
@@ -125,9 +223,15 @@ placeholder="Paste article URL..."
 style={styles.input}
 />
 
-<button style={styles.urlBtn}>
+<button
+onClick={detectURL}
+style={styles.urlBtn}
+>
 Detect URL
 </button>
+
+
+
 
 {/* RESULT CARD */}
 
@@ -191,6 +295,9 @@ Note: This system predicts fake news based on writing patterns and may not verif
 
 </div>
 
+
+
+
 {/* RIGHT PANEL */}
 
 <div style={styles.right}>
@@ -239,6 +346,9 @@ fontWeight:"bold"
 )
 
 }
+
+
+
 
 const styles={
 
@@ -301,6 +411,13 @@ display:"flex",
 gap:"10px"
 },
 
+exampleRow:{
+display:"flex",
+gap:"10px",
+marginTop:"10px",
+marginBottom:"10px"
+},
+
 detectBtn:{
 background:"#2563eb",
 color:"white",
@@ -314,6 +431,24 @@ clearBtn:{
 background:"#6b7280",
 color:"white",
 padding:"10px 20px",
+border:"none",
+borderRadius:"6px",
+cursor:"pointer"
+},
+
+realExample:{
+background:"#22c55e",
+color:"white",
+padding:"8px 14px",
+border:"none",
+borderRadius:"6px",
+cursor:"pointer"
+},
+
+fakeExample:{
+background:"#ef4444",
+color:"white",
+padding:"8px 14px",
 border:"none",
 borderRadius:"6px",
 cursor:"pointer"
