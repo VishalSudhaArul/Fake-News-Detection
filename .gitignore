@@ -26,6 +26,8 @@ __pycache__/
 
 # Machine Learning models
 *.pkl
+!Backend/model.pkl
+!Backend/vectorizer.pkl
 
 # Datasets (VERY IMPORTANT)
 dataset/
