@@ -3,28 +3,36 @@ from flask_cors import CORS
 import joblib
 import requests
 from bs4 import BeautifulSoup
+import os
 
 app = Flask(__name__)
 CORS(app)
 
-# Load trained model and vectorizer
-model = joblib.load("model.pkl")
-vectorizer = joblib.load("vectorizer.pkl")
+# ------------------------------------------------
+# Load model and vectorizer using correct path
+# ------------------------------------------------
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+model_path = os.path.join(BASE_DIR, "model.pkl")
+vectorizer_path = os.path.join(BASE_DIR, "vectorizer.pkl")
+
+model = joblib.load(model_path)
+vectorizer = joblib.load(vectorizer_path)
 
 
-# ---------------------------------
-# Function: Extract article text
-# ---------------------------------
+# ------------------------------------------------
+# Extract article text from URL
+# ------------------------------------------------
 def extract_text_from_url(url):
     try:
-        headers = {
-            "User-Agent": "Mozilla/5.0"
-        }
+        headers = {"User-Agent": "Mozilla/5.0"}
 
         response = requests.get(url, headers=headers, timeout=10)
+
         soup = BeautifulSoup(response.text, "lxml")
 
         paragraphs = soup.find_all("p")
+
         article_text = " ".join([p.get_text() for p in paragraphs])
 
         if len(article_text) < 200:
@@ -37,9 +45,9 @@ def extract_text_from_url(url):
         return None
 
 
-# ---------------------------------
-# Home Route
-# ---------------------------------
+# ------------------------------------------------
+# Home route
+# ------------------------------------------------
 @app.route("/")
 def home():
     return jsonify({
@@ -47,9 +55,9 @@ def home():
     })
 
 
-# ---------------------------------
-# Predict from Text
-# ---------------------------------
+# ------------------------------------------------
+# Predict using text
+# ------------------------------------------------
 @app.route("/predict", methods=["POST"])
 def predict():
 
@@ -64,7 +72,9 @@ def predict():
         })
 
     vectorized = vectorizer.transform([text])
+
     prediction = model.predict(vectorized)[0]
+
     probability = model.predict_proba(vectorized)[0]
 
     confidence = round(max(probability) * 100, 2)
@@ -77,13 +87,14 @@ def predict():
     })
 
 
-# ---------------------------------
-# Predict from URL
-# ---------------------------------
+# ------------------------------------------------
+# Predict using URL
+# ------------------------------------------------
 @app.route("/predict-url", methods=["POST"])
 def predict_url():
 
     data = request.get_json()
+
     url = data.get("url")
 
     if not url:
@@ -101,7 +112,9 @@ def predict_url():
         })
 
     vectorized = vectorizer.transform([article_text])
+
     prediction = model.predict(vectorized)[0]
+
     probability = model.predict_proba(vectorized)[0]
 
     confidence = round(max(probability) * 100, 2)
@@ -114,8 +127,9 @@ def predict_url():
     })
 
 
-# ---------------------------------
-# Run Server
-# ---------------------------------
+# ------------------------------------------------
+# Run server
+# ------------------------------------------------
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000)
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port)
