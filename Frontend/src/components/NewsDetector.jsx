@@ -325,7 +325,7 @@ Note: This system predicts fake news based on writing patterns and may not verif
 
 <span
 style={{
-color: h.result==="Fake News" ? "#dc2626" : "#16a34a",
+color: h.result==="Real News" ? "#16a34a" : "#dc2626",
 fontWeight:"bold"
 }}
 >
