@@ -198,14 +198,14 @@ Clear
 onClick={realExample}
 style={styles.realExample}
 >
-Try Fake News Example
+Try Real News Example
 </button>
 
 <button
 onClick={fakeExample}
 style={styles.fakeExample}
 >
-Try Real News Example
+Try Fake News Example
 </button>
 
 </div>
@@ -259,9 +259,9 @@ style={{
 ...styles.barFill,
 width:`${result.confidence}%`,
 background:
-result.prediction==="Fake News"
-? "#ef4444"
-: "#22c55e"
+result.prediction==="Real News"
+? "#22c55e"
+: "#ef4444"
 }}
 ></div>
 </div>
