@@ -160,7 +160,7 @@ labels:["Fake News","Real News"],
 datasets:[
 {
 data:[fakeCount,realCount],
-backgroundColor:["#ef4444","#22c55e"]
+backgroundColor:["#22c55e","#ef4444"]
 }
 ]
 
