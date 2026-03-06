@@ -1,221 +1,371 @@
-import React, { useState } from "react";
-import "./NewsDetector.css";
+import { useState } from "react"
+import axios from "axios"
+import { Pie } from "react-chartjs-2"
+import {
+Chart as ChartJS,
+ArcElement,
+Tooltip,
+Legend
+} from "chart.js"
 
-const API_URL = "https://fake-news-detection-2-j5mr.onrender.com";
+ChartJS.register(ArcElement, Tooltip, Legend)
 
-function NewsDetector() {
+export default function NewsDetector(){
 
-  const [text, setText] = useState("");
-  const [url, setUrl] = useState("");
-  const [result, setResult] = useState(null);
-  const [confidence, setConfidence] = useState(null);
-  const [history, setHistory] = useState([]);
+const [text,setText] = useState("")
+const [url,setUrl] = useState("")
+const [result,setResult] = useState(null)
+const [loading,setLoading] = useState(false)
+const [history,setHistory] = useState([])
 
-  // Detect Text
-  const detectText = async () => {
+const detectText = async () =>{
 
-    if (!text.trim()) return;
+if(!text.trim()) return
 
-    try {
+setLoading(true)
 
-      const res = await fetch(`${API_URL}/predict`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ text }),
-      });
+try{
 
-      const data = await res.json();
+const res = await axios.post("https://fake-news-detection-2-j5mr.onrender.com/predict",{
+text:text
+})
 
-      setResult(data.result);
-      setConfidence(data.confidence);
+setResult(res.data)
 
-      setHistory([
-        {
-          text: text.substring(0, 80),
-          result: data.result,
-        },
-        ...history,
-      ]);
+setHistory(prev=>[
+{text:text,result:res.data.prediction},
+...prev
+])
 
-    } catch (err) {
-      console.error(err);
-    }
-  };
+}catch(err){
 
-  // Detect URL
-  const detectURL = async () => {
+console.log(err)
 
-    if (!url.trim()) return;
-
-    try {
-
-      const res = await fetch(`${API_URL}/predict-url`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ url }),
-      });
-
-      const data = await res.json();
-
-      setResult(data.result);
-      setConfidence(data.confidence);
-
-      setHistory([
-        {
-          text: url,
-          result: data.result,
-        },
-        ...history,
-      ]);
-
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
-  // Example Real News
-  const exampleReal = () => {
-
-    const sample =
-      "The Indian government announced a new education policy aimed at improving rural school infrastructure and digital learning.";
-
-    setText(sample);
-  };
-
-  // Example Fake News
-  const exampleFake = () => {
-
-    const sample =
-      "Breaking: Scientists discover a secret planet hidden behind the sun that NASA kept secret for decades.";
-
-    setText(sample);
-  };
-
-  const clearAll = () => {
-    setText("");
-    setUrl("");
-    setResult(null);
-    setConfidence(null);
-  };
-
-  return (
-    <div className="container">
-
-      <div className="left">
-
-        <h1>AI Fake News Detector</h1>
-
-        <p>
-          Analyze news text or article links using machine learning
-        </p>
-
-        <hr />
-
-        <h3>Check News Text</h3>
-
-        <textarea
-          placeholder="Paste news headline or article..."
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-        />
-
-        <div className="buttons">
-
-          <button className="primary" onClick={detectText}>
-            Detect News
-          </button>
-
-          <button className="secondary" onClick={clearAll}>
-            Clear
-          </button>
-
-        </div>
-
-        <div className="examples">
-
-          <button className="exampleReal" onClick={exampleReal}>
-            Try Real News Example
-          </button>
-
-          <button className="exampleFake" onClick={exampleFake}>
-            Try Fake News Example
-          </button>
-
-        </div>
-
-        <hr />
-
-        <h3>Check News URL</h3>
-
-        <input
-          placeholder="Paste article URL..."
-          value={url}
-          onChange={(e) => setUrl(e.target.value)}
-        />
-
-        <button className="urlBtn" onClick={detectURL}>
-          Detect URL
-        </button>
-
-        {result && (
-          <div className="resultBox">
-
-            <h2
-              style={{
-                color: result === "Real News" ? "green" : "red",
-              }}
-            >
-              {result}
-            </h2>
-
-            <p>Confidence: {confidence}%</p>
-
-          </div>
-        )}
-
-        <p className="note">
-          Note: This system predicts fake news based on writing patterns and may not verify factual correctness.
-        </p>
-
-      </div>
-
-      <div className="right">
-
-        <h3>Prediction Analytics</h3>
-
-        <hr />
-
-        <h3>History</h3>
-
-        {history.length === 0 ? (
-          <p>No history yet</p>
-        ) : (
-          history.map((item, index) => (
-            <div key={index} className="historyItem">
-
-              <p>{item.text}</p>
-
-              <span
-                style={{
-                  color:
-                    item.result === "Real News" ? "green" : "red",
-                }}
-              >
-                {item.result}
-              </span>
-
-            </div>
-          ))
-        )}
-
-      </div>
-
-    </div>
-  );
 }
 
-export default NewsDetector;
+setLoading(false)
+
+}
+
+const clearAll = ()=>{
+setText("")
+setUrl("")
+setResult(null)
+}
+
+const chartData = {
+
+labels:["Fake News","Real News"],
+
+datasets:[
+{
+data:[
+history.filter(h=>h.result==="Fake News").length,
+history.filter(h=>h.result==="Real News").length
+],
+backgroundColor:["#ef4444","#22c55e"]
+}
+]
+
+}
+
+return(
+
+<div style={styles.page}>
+
+<div style={styles.container}>
+
+{/* LEFT PANEL */}
+
+<div style={styles.left}>
+
+<h1 style={styles.title}>AI Fake News Detector</h1>
+
+<p style={styles.subtitle}>
+Analyze news text or article links using machine learning
+</p>
+
+<hr/>
+
+<h3>Check News Text</h3>
+
+<textarea
+value={text}
+onChange={(e)=>setText(e.target.value)}
+placeholder="Paste news headline or article..."
+style={styles.textarea}
+/>
+
+<div style={styles.buttonRow}>
+
+<button
+onClick={detectText}
+style={styles.detectBtn}
+>
+Detect News
+</button>
+
+<button
+onClick={clearAll}
+style={styles.clearBtn}
+>
+Clear
+</button>
+
+</div>
+
+<hr/>
+
+<h3>Check News URL</h3>
+
+<input
+value={url}
+onChange={(e)=>setUrl(e.target.value)}
+placeholder="Paste article URL..."
+style={styles.input}
+/>
+
+<button style={styles.urlBtn}>
+Detect URL
+</button>
+
+{/* RESULT CARD */}
+
+{loading && (
+<div style={styles.loading}>
+AI analyzing news...
+</div>
+)}
+
+{result && (
+
+<div style={styles.resultCard}>
+
+<h2 style={{
+color: result.prediction==="Real News" ? "#16a34a" : "#dc2626"
+}}>
+{result.prediction}
+</h2>
+
+<p>Confidence: {result.confidence}%</p>
+
+<div style={styles.barBg}>
+<div
+style={{
+...styles.barFill,
+width:`${result.confidence}%`,
+background:
+result.prediction==="Real News"
+? "#22c55e"
+: "#ef4444"
+}}
+></div>
+</div>
+
+{result.credibility && (
+
+<>
+<p>Credibility Score: {result.credibility}%</p>
+
+<div style={styles.barBg}>
+<div
+style={{
+...styles.barFill,
+width:`${result.credibility}%`,
+background:"#3b82f6"
+}}
+></div>
+</div>
+
+</>
+
+)}
+
+</div>
+
+)}
+
+<p style={styles.note}>
+Note: This system predicts fake news based on writing patterns and may not verify factual correctness.
+</p>
+
+</div>
+
+{/* RIGHT PANEL */}
+
+<div style={styles.right}>
+
+<h3>Prediction Analytics</h3>
+
+<Pie data={chartData}/>
+
+<hr/>
+
+<h3>History</h3>
+
+<div style={styles.historyBox}>
+
+{history.length===0 && (
+<p>No history yet</p>
+)}
+
+{history.map((h,i)=>(
+<div key={i} style={styles.historyItem}>
+
+<p style={{fontSize:"14px"}}>
+{h.text.substring(0,80)}...
+</p>
+
+<span
+style={{
+color: h.result==="Real News" ? "#16a34a" : "#dc2626",
+fontWeight:"bold"
+}}
+>
+{h.result}
+</span>
+
+</div>
+))}
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+)
+
+}
+
+const styles={
+
+page:{
+background:"#f3f4f6",
+minHeight:"100vh",
+padding:"40px"
+},
+
+container:{
+display:"grid",
+gridTemplateColumns:"1fr 380px",
+gap:"30px",
+maxWidth:"1200px",
+margin:"auto"
+},
+
+left:{
+background:"white",
+padding:"30px",
+borderRadius:"10px",
+boxShadow:"0 4px 10px rgba(0,0,0,0.1)"
+},
+
+right:{
+background:"white",
+padding:"20px",
+borderRadius:"10px",
+boxShadow:"0 4px 10px rgba(0,0,0,0.1)"
+},
+
+title:{
+fontSize:"36px",
+marginBottom:"5px"
+},
+
+subtitle:{
+color:"#555",
+marginBottom:"20px"
+},
+
+textarea:{
+width:"100%",
+height:"110px",
+padding:"10px",
+borderRadius:"6px",
+border:"1px solid #ccc"
+},
+
+input:{
+width:"100%",
+padding:"10px",
+borderRadius:"6px",
+border:"1px solid #ccc",
+marginBottom:"10px"
+},
+
+buttonRow:{
+display:"flex",
+gap:"10px"
+},
+
+detectBtn:{
+background:"#2563eb",
+color:"white",
+padding:"10px 20px",
+border:"none",
+borderRadius:"6px",
+cursor:"pointer"
+},
+
+clearBtn:{
+background:"#6b7280",
+color:"white",
+padding:"10px 20px",
+border:"none",
+borderRadius:"6px",
+cursor:"pointer"
+},
+
+urlBtn:{
+background:"#16a34a",
+color:"white",
+padding:"10px 20px",
+border:"none",
+borderRadius:"6px",
+cursor:"pointer"
+},
+
+resultCard:{
+marginTop:"20px",
+padding:"20px",
+background:"#f9fafb",
+borderRadius:"8px"
+},
+
+barBg:{
+height:"10px",
+background:"#e5e7eb",
+borderRadius:"5px",
+marginBottom:"10px"
+},
+
+barFill:{
+height:"10px",
+borderRadius:"5px"
+},
+
+loading:{
+marginTop:"20px",
+color:"#2563eb"
+},
+
+note:{
+marginTop:"20px",
+fontSize:"13px",
+color:"#666"
+},
+
+historyBox:{
+maxHeight:"300px",
+overflow:"auto"
+},
+
+historyItem:{
+borderBottom:"1px solid #eee",
+padding:"10px 0"
+}
+
+}
