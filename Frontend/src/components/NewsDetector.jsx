@@ -436,7 +436,7 @@ borderRadius:"6px"
 },
 
 realBtn:{
-background:"#22c55e",
+background:"#ef4444",
 color:"white",
 padding:"8px 14px",
 border:"none",
@@ -444,7 +444,7 @@ borderRadius:"6px"
 },
 
 fakeBtn:{
-background:"#ef4444",
+background:"#22c55e",
 color:"white",
 padding:"8px 14px",
 border:"none",
