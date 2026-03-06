@@ -270,7 +270,7 @@ style={{
 ...styles.barFill,
 width:`${result.confidence}%`,
 background:
-result.prediction==="Real News"
+result.prediction==="Fake News"
 ? "#22c55e"
 : "#ef4444"
 }}
