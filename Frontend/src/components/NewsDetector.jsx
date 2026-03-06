@@ -215,11 +215,11 @@ Clear
 <div style={styles.exampleRow}>
 
 <button onClick={exampleReal} style={styles.realBtn}>
-Example Real News
+Example Fake News
 </button>
 
 <button onClick={exampleFake} style={styles.fakeBtn}>
-Example Fake News
+Example Real News
 </button>
 
 </div>
